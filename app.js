@@ -1,10 +1,11 @@
 import express from "express";
-import router from "./routes/root.js"; // Đảm bảo đường dẫn đúng tới tệp routes/root.js trong Routes 
+import router from "./routes/root.js"; 
 import { connectdb } from "./config/connectdb.js";
-import mongoose from "mongoose";
-import bookRouter from "./routes/booking.js";
+import tripRouter from "./routes/trip.js";
 import bodyParser from 'body-parser'; 
 import methodOverride from 'method-override'; // Nhập khẩu method-override
+import session from 'express-session';
+
 
 const app = express();
 const port = 8080; 
@@ -27,12 +28,51 @@ app.use(
       }
     })
   );
-  
+  // Login
+
+// Middleware setup
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(session({
+  secret: 'secret-key',
+  resave: false,
+  saveUninitialized: true
+}));
+
+// Hardcoded credentials (admin username and password)
+const ADMIN_USERNAME = 'admin';
+const ADMIN_PASSWORD = '123123123';  // You can change this or retrieve from a database
+
+// Route to show the login page
+app.get('/login', (req, res) => {
+  res.render('login', { title: 'Login Page' });   // Ensure 'login.ejs' is in the views folder
+});
+
+// Route to handle login form submission
+app.post('/login', (req, res) => {
+  const { username, password } = req.body;
+
+  // Check if the credentials are correct
+  if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+    // Store the username in the session to track the login state
+    req.session.loggedIn = true;
+    req.session.username = username;
+
+    // Redirect to the trips page
+    res.redirect('/trips');
+  } else {
+    // If credentials are incorrect, send back an error message
+    res.send('Invalid credentials, please try again.');
+  }
+});
+
+
+
+
 
  // Định tuyến cho trang chủ
  app.use("/", router);
  
- app.use("/books", bookRouter);
+ app.use("/trips", tripRouter);
 
  // Cong chay
 app.listen(port, () =>{
